@@ -152,7 +152,7 @@ local function setCrosshairColor(color)
 end
 
 -------------------------------------------------
--- ESP
+-- ESP (SOMENTE PLAYERS)
 -------------------------------------------------
 
 local espFolder = Instance.new("Folder")
@@ -172,46 +172,51 @@ end
 
 local espTable = {}
 
+Players.PlayerRemoving:Connect(function(plr)
+	if espTable[plr] then
+		espTable[plr]:Destroy()
+		espTable[plr] = nil
+	end
+end)
+
 RunService.Heartbeat:Connect(function()
 	if not character then return end
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	-- Limpa ESP antigos
-	for _,v in pairs(espTable) do
-		v:Destroy()
-	end
-	espTable = {}
-
-	-- Busca TODOS os Humanoides (Players e NPCs)
-	for _,humanoid in pairs(workspace:GetDescendants()) do
-		if humanoid:IsA("Humanoid") and humanoid.Health > 0 then
-			local char = humanoid.Parent
-			if char ~= character then
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				if hrp then
-					local distance = (hrp.Position - root.Position).Magnitude
-					local pos, visible = camera:WorldToViewportPoint(hrp.Position)
-
-					if visible and distance <= LOCK_DISTANCE then
-						local obj = createESP()
-						espTable[char] = obj
-
-						local healthPercent = math.floor((humanoid.Health / humanoid.MaxHealth) * 100)
-						local healthColor
-
-						if healthPercent >= 90 then healthColor = Color3.fromRGB(0,200,100)
-						elseif healthPercent >= 75 then healthColor = Color3.fromRGB(100,255,100)
-						elseif healthPercent >= 50 then healthColor = Color3.fromRGB(255,200,50)
-						elseif healthPercent >= 20 then healthColor = Color3.fromRGB(255,255,100)
-						else healthColor = Color3.fromRGB(255,80,80) end
-
-						obj.TextColor3 = healthColor
-						obj.Visible = true
-						obj.Position = UDim2.new(0,pos.X-100,0,pos.Y-60)
-						obj.Text = "➤ "..char.Name.." | "..math.floor(distance).."m | "..healthPercent.."%"
+	-- BUSCA SOMENTE PLAYERS PARA O ESP
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local char = plr.Character
+			if not char then
+				if espTable[plr] then espTable[plr].Visible = false end
+				continue
+			end
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if hrp and humanoid and humanoid.Health > 0 then
+				local distance = (hrp.Position - root.Position).Magnitude
+				local pos, visible = camera:WorldToViewportPoint(hrp.Position)
+				if visible and distance <= LOCK_DISTANCE then
+					if not espTable[plr] then
+						espTable[plr] = createESP()
 					end
+					local healthPercent = math.floor((humanoid.Health / humanoid.MaxHealth) * 100)
+					local healthColor
+					if healthPercent >= 90 then healthColor = Color3.fromRGB(0,200,100)
+					elseif healthPercent >= 75 then healthColor = Color3.fromRGB(100,255,100)
+					elseif healthPercent >= 50 then healthColor = Color3.fromRGB(255,200,50)
+					elseif healthPercent >= 20 then healthColor = Color3.fromRGB(255,255,100)
+					else healthColor = Color3.fromRGB(255,80,80) end
+					espTable[plr].TextColor3 = healthColor
+					espTable[plr].Visible = true
+					espTable[plr].Position = UDim2.new(0,pos.X-100,0,pos.Y-60)
+					espTable[plr].Text = "➤ "..plr.Name.." | "..math.floor(distance).."m | "..healthPercent.."%"
+				else
+					if espTable[plr] then espTable[plr].Visible = false end
 				end
+			else
+				if espTable[plr] then espTable[plr].Visible = false end
 			end
 		end
 	end
@@ -299,6 +304,7 @@ lockButton.MouseButton1Click:Connect(function()
 		UIStroke.Color = Color3.fromRGB(255,80,80)
 	else
 		lockedTarget = nil
+		setCrosshairColor(Color3.new(1,1,1)) -- Volta ao normal
 		lockButton.Text = "LOCK"
 		MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
 		UIStroke.Color = Color3.fromRGB(80, 150, 255)
@@ -306,7 +312,7 @@ lockButton.MouseButton1Click:Connect(function()
 end)
 
 -------------------------------------------------
--- PEGAR ALVO (AGORA PEGA PLAYERS E NPCS)
+-- PEGAR ALVO (PLAYERS E NPCS)
 -------------------------------------------------
 
 local function getNearestTarget()
@@ -316,9 +322,9 @@ local function getNearestTarget()
 
 	local closest = nil
 	local shortestDist = math.huge
-	local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2) -- Centro da tela
+	local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 
-	-- Busca em TODOS os Humanoides
+	-- Busca EM TUDO (Players e NPCs)
 	for _,humanoid in pairs(workspace:GetDescendants()) do
 		if humanoid:IsA("Humanoid") and humanoid.Health > 0 then
 			local char = humanoid.Parent
@@ -327,13 +333,10 @@ local function getNearestTarget()
 				if hrp then
 					local distance = (hrp.Position - myRoot.Position).Magnitude
 					if distance <= LOCK_DISTANCE then
-						-- Calcula o quão perto ele está do CENTRO DA TELA
 						local pos, visible = camera:WorldToViewportPoint(hrp.Position)
 						if visible then
 							local screenPos = Vector2.new(pos.X, pos.Y)
 							local distToCenter = (screenPos - center).Magnitude
-							
-							-- Quanto menor a distância do centro, mais prioridade
 							if distToCenter < shortestDist then
 								shortestDist = distToCenter
 								closest = char
@@ -348,12 +351,11 @@ local function getNearestTarget()
 end
 
 -------------------------------------------------
--- SISTEMA LOCK (MODO CONSOLE / JUJUTSU SHENANIGANS)
+-- SISTEMA LOCK (COM VERIFICAÇÃO DE COR)
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
 	if not lockEnabled then
-		setCrosshairColor(Color3.new(1,1,1))
 		return
 	end
 	if not character then return end
@@ -372,7 +374,20 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 
-	setCrosshairColor(Color3.fromRGB(255,0,0))
+	-- ✅ MUDAR A COR CONFORME O TIPO
+	local isPlayer = false
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr.Character == lockedTarget then
+			isPlayer = true
+			break
+		end
+	end
+
+	if isPlayer then
+		setCrosshairColor(Color3.fromRGB(255,0,0)) -- VERMELHO = PLAYER
+	else
+		setCrosshairColor(Color3.fromRGB(0,255,0)) -- VERDE = NPC
+	end
 
 	-- ✅ A MAGICA DO MODO CONSOLE:
 	local angleCFrame = CFrame.new(myRoot.Position, targetRoot.Position)
