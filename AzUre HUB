@@ -183,7 +183,6 @@ RunService.RenderStepped:Connect(function()
 	if not character then return end
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
-
 	for _,plr in pairs(Players:GetPlayers()) do
 		if plr ~= player then
 			local char = plr.Character
@@ -191,28 +190,22 @@ RunService.RenderStepped:Connect(function()
 				if espTable[plr] then espTable[plr].Visible = false end
 				continue
 			end
-
 			local hrp = char:FindFirstChild("HumanoidRootPart")
 			local humanoid = char:FindFirstChildOfClass("Humanoid")
-
 			if hrp and humanoid and humanoid.Health > 0 then
 				local distance = (hrp.Position - root.Position).Magnitude
 				local pos, visible = camera:WorldToViewportPoint(hrp.Position)
-
 				if visible and distance <= LOCK_DISTANCE then
 					if not espTable[plr] then
 						espTable[plr] = createESP()
 					end
-
 					local healthPercent = math.floor((humanoid.Health / humanoid.MaxHealth) * 100)
 					local healthColor
-
 					if healthPercent >= 90 then healthColor = Color3.fromRGB(0,200,100)
 					elseif healthPercent >= 75 then healthColor = Color3.fromRGB(100,255,100)
 					elseif healthPercent >= 50 then healthColor = Color3.fromRGB(255,200,50)
 					elseif healthPercent >= 20 then healthColor = Color3.fromRGB(255,255,100)
 					else healthColor = Color3.fromRGB(255,80,80) end
-
 					espTable[plr].TextColor3 = healthColor
 					espTable[plr].Visible = true
 					espTable[plr].Position = UDim2.new(0,pos.X-100,0,pos.Y-60)
@@ -233,7 +226,7 @@ end)
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0,130,0,45)
-MainFrame.Position = UDim2.new(1,-140,0,20) -- ✅ VOCÊ PODE MUDAR ESSA POSIÇÃO A VONTADE AGORA!
+MainFrame.Position = UDim2.new(1,-140,0,20) -- PODE MUDAR A POSIÇÃO A VONTADE
 MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -288,10 +281,8 @@ end)
 -- Função do Cadeado
 lockIcon.MouseButton1Click:Connect(function()
 	menuLocked = not menuLocked
-	
 	MainFrame.Draggable = not menuLocked
 	MainFrame.Active = true
-
 	if menuLocked then
 		lockIcon.Text = "🔒"
 		lockIcon.BackgroundColor3 = Color3.fromRGB(100,30,30)
@@ -301,8 +292,7 @@ lockIcon.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Função do Lock
--- ✅ ESSA FUNÇÃO FOI REFEITA PARA NÃO QUEBRAR MAIS!
+-- Função do Lock (CORRIGIDA)
 lockButton.MouseButton1Click:Connect(function()
 	lockEnabled = not lockEnabled
 	if lockEnabled then
@@ -326,10 +316,8 @@ local function getNearestTarget()
 	if not character then return nil end
 	local myRoot = character:FindFirstChild("HumanoidRootPart")
 	if not myRoot then return nil end
-
 	local closest = nil
 	local shortestDist = math.huge
-
 	for _,plr in pairs(Players:GetPlayers()) do
 		if plr ~= player then
 			local char = plr.Character
@@ -359,27 +347,20 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 	if not character then return end
-
 	if not lockedTarget then
 		lockedTarget = getNearestTarget()
 		return
 	end
-
 	local humanoid = lockedTarget:FindFirstChildOfClass("Humanoid")
 	local targetRoot = lockedTarget:FindFirstChild("HumanoidRootPart")
 	local myRoot = character:FindFirstChild("HumanoidRootPart")
-
 	if not humanoid or not targetRoot or humanoid.Health <= 0 or not myRoot then
 		lockedTarget = getNearestTarget()
 		return
 	end
-
 	setCrosshairColor(Color3.fromRGB(255,0,0))
-
-	-- ✅ A MAGICA DO MODO CONSOLE:
 	local angleCFrame = CFrame.new(myRoot.Position, targetRoot.Position)
 	local cameraPos = myRoot.Position + angleCFrame.LookVector * -ZOOM_DISTANCE + Vector3.new(0, 3, 0)
-	
 	camera.CFrame = CFrame.new(cameraPos, targetRoot.Position)
 	camera.Focus = CFrame.new(myRoot.Position)
 end)
