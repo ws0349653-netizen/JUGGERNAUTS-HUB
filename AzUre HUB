@@ -1,5 +1,5 @@
 -------------------------------------------------
--- AZURI HUB - REVAMPED (CORRIGIDO)
+-- AZURI HUB - REVAMPED (CORRIGIDO - MOVIMENTO LIVRE)
 -------------------------------------------------
 
 local Players = game:GetService("Players")
@@ -278,13 +278,16 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -------------------------------------------------
--- FUNÇÕES DOS BOTÕES
+-- FUNÇÕES DOS BOTÕES (CORRIGIDAS)
 -------------------------------------------------
 
 -- Função do Cadeado
 lockIcon.MouseButton1Click:Connect(function()
 	menuLocked = not menuLocked
-	MainFrame.Draggable = not menuLocked -- Trava ou Destrava
+	
+	--  CORREÇÃO AQUI: Agora libera o toque e o movimento
+	MainFrame.Draggable = not menuLocked
+	MainFrame.Active = not menuLocked -- <<< Linha adicionada para pegar o toque
 
 	if menuLocked then
 		lockIcon.Text = "🔒"
