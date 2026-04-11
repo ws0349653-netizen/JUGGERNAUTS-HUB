@@ -1,11 +1,12 @@
 -------------------------------------------------
--- SERVICES
+-- AZURI HUB - REVAMPED
 -------------------------------------------------
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 -------------------------------------------------
 -- PLAYER
@@ -13,7 +14,6 @@ local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
-
 local character = player.Character or player.CharacterAdded:Wait()
 
 player.CharacterAdded:Connect(function(char)
@@ -27,17 +27,13 @@ end)
 _G.AntiStun = true
 
 RunService.Heartbeat:Connect(function()
-
 	if not _G.AntiStun then return end
 	if not character then return end
-
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local root = character:FindFirstChild("HumanoidRootPart")
-
 	if humanoid and root and humanoid.MoveDirection.Magnitude > 0 then
 		root.CFrame = root.CFrame + humanoid.MoveDirection.Unit * 0.5
 	end
-
 end)
 
 -------------------------------------------------
@@ -45,11 +41,13 @@ end)
 -------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
+gui.Name = "AzuriHub"
 gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.Parent = player:WaitForChild("PlayerGui")
 
 -------------------------------------------------
--- JUGGERNAUTS HUB DEMON INTRO
+-- INTRO ESTETICA
 -------------------------------------------------
 
 local intro = Instance.new("Frame")
@@ -57,47 +55,33 @@ intro.Size = UDim2.new(1,0,1,0)
 intro.BackgroundColor3 = Color3.new(0,0,0)
 intro.Parent = gui
 
-local background = Instance.new("ImageLabel")
-background.Size = UDim2.new(1,0,1,0)
-background.BackgroundTransparency = 1
-background.Image = "rbxassetid://COLOQUE_ID_DA_IMAGEM"
-background.ImageTransparency = 1
-background.ScaleType = Enum.ScaleType.Crop
-background.Parent = intro
-
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,120)
-title.Position = UDim2.new(0,0,0.5,-60)
+title.Size = UDim2.new(1,0,0,100)
+title.Position = UDim2.new(0,0,0.5,-50)
 title.BackgroundTransparency = 1
-title.Text = "JUGGERN4UTS HUB"
-title.Font = Enum.Font.Arcade
+title.Text = "AZURI HUB"
+title.Font = Enum.Font.FredokaOne
 title.TextScaled = true
-title.TextColor3 = Color3.fromRGB(255,40,40)
+title.TextColor3 = Color3.fromRGB(100, 180, 255)
 title.TextStrokeTransparency = 0
 title.TextTransparency = 1
 title.Parent = intro
 
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 4
-stroke.Color = Color3.fromRGB(255,0,0)
+stroke.Color = Color3.fromRGB(80, 150, 255)
 stroke.Parent = title
 
 local pulse = 0
-
 RunService.RenderStepped:Connect(function()
 	pulse += 0.05
 	stroke.Transparency = math.abs(math.sin(pulse)) * 0.4
 end)
 
-TweenService:Create(background,TweenInfo.new(1.5),{ImageTransparency = 0}):Play()
 TweenService:Create(title,TweenInfo.new(1),{TextTransparency = 0}):Play()
-
 task.wait(1.5)
-
 TweenService:Create(intro,TweenInfo.new(1),{BackgroundTransparency = 1}):Play()
-
 task.wait(1)
-
 intro:Destroy()
 
 -------------------------------------------------
@@ -107,6 +91,7 @@ intro:Destroy()
 local LOCK_DISTANCE = 120
 local lockEnabled = false
 local lockedTarget = nil
+local menuLocked = false
 
 -------------------------------------------------
 -- FPS BOOST
@@ -117,23 +102,16 @@ Lighting.FogEnd = 100000
 Lighting.Brightness = 2
 
 for _,v in pairs(workspace:GetDescendants()) do
-
-	if v:IsA("ParticleEmitter")
-	or v:IsA("Trail")
-	or v:IsA("Smoke")
-	or v:IsA("Fire") then
+	if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
 		v.Enabled = false
 	end
-
 	if v:IsA("Decal") then
 		v.Transparency = 1
 	end
-
 	if v:IsA("BasePart") then
 		v.Material = Enum.Material.Plastic
 		v.Reflectance = 0
 	end
-
 end
 
 -------------------------------------------------
@@ -149,16 +127,13 @@ crosshair.Parent = gui
 local crosshairLines = {}
 
 local function createLine(x,y,w,h)
-
 	local line = Instance.new("Frame")
 	line.Size = UDim2.new(0,w,0,h)
 	line.Position = UDim2.new(0,x,0,y)
 	line.BackgroundColor3 = Color3.new(1,1,1)
 	line.BorderSizePixel = 0
 	line.Parent = crosshair
-
 	table.insert(crosshairLines,line)
-
 end
 
 createLine(9,0,2,6)
@@ -177,49 +152,39 @@ end
 -------------------------------------------------
 
 local espFolder = Instance.new("Folder")
+espFolder.Name = "ESP_System"
 espFolder.Parent = gui
 
 local function createESP()
-
 	local text = Instance.new("TextLabel")
 	text.BackgroundTransparency = 1
 	text.TextStrokeTransparency = 0.6
-	text.Size = UDim2.new(0,200,0,14)
-	text.Font = Enum.Font.Gotham
+	text.Size = UDim2.new(0,200,0,16)
+	text.Font = Enum.Font.GothamBold
 	text.TextScaled = true
 	text.Parent = espFolder
-
 	return text
-
 end
 
 local espTable = {}
 
 Players.PlayerRemoving:Connect(function(plr)
-
 	if espTable[plr] then
 		espTable[plr]:Destroy()
 		espTable[plr] = nil
 	end
-
 end)
 
 RunService.RenderStepped:Connect(function()
-
 	if not character then return end
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
 	for _,plr in pairs(Players:GetPlayers()) do
-
 		if plr ~= player then
-
 			local char = plr.Character
-
 			if not char then
-				if espTable[plr] then
-					espTable[plr].Visible = false
-				end
+				if espTable[plr] then espTable[plr].Visible = false end
 				continue
 			end
 
@@ -227,82 +192,122 @@ RunService.RenderStepped:Connect(function()
 			local humanoid = char:FindFirstChildOfClass("Humanoid")
 
 			if hrp and humanoid and humanoid.Health > 0 then
-
-				if not espTable[plr] then
-					espTable[plr] = createESP()
-				end
-
 				local distance = (hrp.Position - root.Position).Magnitude
 				local pos, visible = camera:WorldToViewportPoint(hrp.Position)
 
-				if visible then
+				if visible and distance <= LOCK_DISTANCE then
+					if not espTable[plr] then
+						espTable[plr] = createESP()
+					end
 
 					local healthPercent = math.floor((humanoid.Health / humanoid.MaxHealth) * 100)
-
 					local healthColor
 
-					if healthPercent >= 90 then
-						healthColor = Color3.fromRGB(0,120,0)
-					elseif healthPercent >= 75 then
-						healthColor = Color3.fromRGB(0,255,0)
-					elseif healthPercent >= 50 then
-						healthColor = Color3.fromRGB(255,140,0)
-					elseif healthPercent >= 20 then
-						healthColor = Color3.fromRGB(255,255,0)
-					else
-						healthColor = Color3.fromRGB(255,0,0)
-					end
+					if healthPercent >= 90 then healthColor = Color3.fromRGB(0,200,100)
+					elseif healthPercent >= 75 then healthColor = Color3.fromRGB(100,255,100)
+					elseif healthPercent >= 50 then healthColor = Color3.fromRGB(255,200,50)
+					elseif healthPercent >= 20 then healthColor = Color3.fromRGB(255,255,100)
+					else healthColor = Color3.fromRGB(255,80,80) end
 
 					espTable[plr].TextColor3 = healthColor
 					espTable[plr].Visible = true
 					espTable[plr].Position = UDim2.new(0,pos.X-100,0,pos.Y-60)
-					espTable[plr].Text = plr.Name.." ["..math.floor(distance).."m] "..healthPercent.."%"
-
+					espTable[plr].Text = "➤ "..plr.Name.." | "..math.floor(distance).."m | "..healthPercent.."%"
 				else
-					espTable[plr].Visible = false
+					if espTable[plr] then espTable[plr].Visible = false end
 				end
-
 			else
-
-				if espTable[plr] then
-					espTable[plr].Visible = false
-				end
-
+				if espTable[plr] then espTable[plr].Visible = false end
 			end
-
 		end
 	end
-
 end)
 
 -------------------------------------------------
--- BOTÃO LOCK
+-- BOTÃO LOCK COM TRAVA
 -------------------------------------------------
 
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0,130,0,45)
+MainFrame.Position = UDim2.new(1,-140,0,20)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true -- Começa podendo mover
+MainFrame.Parent = gui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0,8)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(80, 150, 255)
+UIStroke.Parent = MainFrame
+
+-- CADEADO
+local lockIcon = Instance.new("TextButton")
+lockIcon.Size = UDim2.new(0,40,0,45)
+lockIcon.Position = UDim2.new(0,0,0,0)
+lockIcon.BackgroundColor3 = Color3.fromRGB(30,100,30)
+lockIcon.Text = "🔓"
+lockIcon.TextColor3 = Color3.new(1,1,1)
+lockIcon.Font = Enum.Font.GothamBold
+lockIcon.TextScaled = true
+lockIcon.Parent = MainFrame
+
+-- BOTAO LOCK
 local lockButton = Instance.new("TextButton")
-lockButton.Size = UDim2.new(0,120,0,40)
-lockButton.Position = UDim2.new(1,-140,0,20)
+lockButton.Size = UDim2.new(1,-45,0,45)
+lockButton.Position = UDim2.new(0,40,0,0)
+lockButton.BackgroundTransparency = 1
 lockButton.Text = "LOCK"
-lockButton.BackgroundColor3 = Color3.fromRGB(30,30,30)
 lockButton.TextColor3 = Color3.new(1,1,1)
-lockButton.Parent = gui
+lockButton.Font = Enum.Font.GothamBold
+lockButton.TextScaled = true
+lockButton.Parent = MainFrame
 
-local rgbStroke = Instance.new("UIStroke")
-rgbStroke.Thickness = 3
-rgbStroke.Parent = lockButton
-
+-- EFEITO RGB NA BORDA
 local rgb = 0
-
 RunService.RenderStepped:Connect(function()
+	rgb += 0.02
+	local r = math.sin(rgb) * 40 + 40
+	local g = math.sin(rgb + 1) * 40 + 120
+	local b = math.sin(rgb + 2) * 40 + 215
+	UIStroke.Color = Color3.fromRGB(r,g,b)
+end)
 
-	rgb += 0.03
+-------------------------------------------------
+-- FUNÇÕES DOS BOTÕES
+-------------------------------------------------
 
-	local r = math.sin(rgb) * 127 + 128
-	local g = math.sin(rgb + 2) * 127 + 128
-	local b = math.sin(rgb + 4) * 127 + 128
+-- Função do Cadeado
+lockIcon.MouseButton1Click:Connect(function()
+	menuLocked = not menuLocked
+	MainFrame.Draggable = not menuLocked -- Trava ou Destrava
 
-	rgbStroke.Color = Color3.fromRGB(r,g,b)
+	if menuLocked then
+		lockIcon.Text = "🔒"
+		lockIcon.BackgroundColor3 = Color3.fromRGB(100,30,30)
+	else
+		lockIcon.Text = "🔓"
+		lockIcon.BackgroundColor3 = Color3.fromRGB(30,100,30)
+	end
+end)
 
+-- Função do Lock
+lockButton.MouseButton1Click:Connect(function()
+	lockEnabled = not lockEnabled
+	if lockEnabled then
+		lockedTarget = getNearestTarget()
+		lockButton.Text = "UNLOCK"
+		MainFrame.BackgroundColor3 = Color3.fromRGB(25,15,15)
+		UIStroke.Color = Color3.fromRGB(255,80,80)
+	else
+		lockedTarget = nil
+		lockButton.Text = "LOCK"
+		MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
+	end
 end)
 
 -------------------------------------------------
@@ -310,74 +315,42 @@ end)
 -------------------------------------------------
 
 local function getNearestTarget()
-
 	if not character then return nil end
-
-	local screenCenter = Vector2.new(
-		camera.ViewportSize.X/2,
-		camera.ViewportSize.Y/2
-	)
+	local myRoot = character:FindFirstChild("HumanoidRootPart")
+	if not myRoot then return nil end
 
 	local closest = nil
-	local shortest = math.huge
+	local shortestDist = math.huge
 
-	for _,model in pairs(workspace:GetDescendants()) do
-
-		if model:IsA("Model") and model ~= character then
-
-			local humanoid = model:FindFirstChildOfClass("Humanoid")
-			local hrp = model:FindFirstChild("HumanoidRootPart")
-
-			if humanoid and hrp and humanoid.Health > 0 then
-
-				local pos, visible = camera:WorldToViewportPoint(hrp.Position)
-
-				if visible then
-
-					local screenPos = Vector2.new(pos.X,pos.Y)
-					local dist = (screenPos - screenCenter).Magnitude
-
-					if dist < shortest then
-						shortest = dist
-						closest = model
+	for _,plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local char = plr.Character
+			if char then
+				local humanoid = char:FindFirstChildOfClass("Humanoid")
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				if humanoid and hrp and humanoid.Health > 0 then
+					local distance = (hrp.Position - myRoot.Position).Magnitude
+					if distance <= LOCK_DISTANCE and distance < shortestDist then
+						shortestDist = distance
+						closest = char
 					end
-
 				end
 			end
 		end
 	end
-
 	return closest
-
 end
-
-lockButton.MouseButton1Click:Connect(function()
-
-	lockEnabled = not lockEnabled
-
-	if lockEnabled then
-		lockedTarget = getNearestTarget()
-		lockButton.Text = "UNLOCK"
-	else
-		lockedTarget = nil
-		lockButton.Text = "LOCK"
-	end
-
-end)
 
 -------------------------------------------------
 -- SISTEMA LOCK
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
-
 	if not lockEnabled then
 		setCrosshairColor(Color3.new(1,1,1))
 		return
 	end
-
 	if not character then return end
-
 	if not lockedTarget then
 		lockedTarget = getNearestTarget()
 		return
@@ -390,23 +363,20 @@ RunService.RenderStepped:Connect(function()
 		lockedTarget = getNearestTarget()
 		return
 	end
-
 	if not targetRoot then
 		lockedTarget = getNearestTarget()
 		return
 	end
 
 	local isPlayer = Players:GetPlayerFromCharacter(lockedTarget)
-
 	if isPlayer then
-		setCrosshairColor(Color3.fromRGB(255,0,0))
+		setCrosshairColor(Color3.fromRGB(100, 180, 255))
 	else
-		setCrosshairColor(Color3.fromRGB(0,255,0))
+		setCrosshairColor(Color3.fromRGB(0,255,100))
 	end
 
-	camera.CFrame = CFrame.new(
-		camera.CFrame.Position,
-		targetRoot.Position
-	)
-
+	camera.CFrame = CFrame.new(camera.CFrame.Position, targetRoot.Position)
+	if character:FindFirstChild("HumanoidRootPart") then
+		camera.Focus = character.HumanoidRootPart.CFrame
+	end
 end)
