@@ -1,5 +1,5 @@
 -------------------------------------------------
--- AZURI HUB - REVAMPED
+-- AZURI HUB - REVAMPED (CORRIGIDO)
 -------------------------------------------------
 
 local Players = game:GetService("Players")
@@ -287,10 +287,10 @@ lockIcon.MouseButton1Click:Connect(function()
 	MainFrame.Draggable = not menuLocked -- Trava ou Destrava
 
 	if menuLocked then
-		lockIcon.Text = "trancado"
+		lockIcon.Text = "🔒"
 		lockIcon.BackgroundColor3 = Color3.fromRGB(100,30,30)
 	else
-		lockIcon.Text = "livre"
+		lockIcon.Text = "🔓"
 		lockIcon.BackgroundColor3 = Color3.fromRGB(30,100,30)
 	end
 end)
@@ -307,6 +307,7 @@ lockButton.MouseButton1Click:Connect(function()
 		lockedTarget = nil
 		lockButton.Text = "LOCK"
 		MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
+		UIStroke.Color = Color3.fromRGB(80, 150, 255) -- Volta cor original
 	end
 end)
 
@@ -332,7 +333,7 @@ local function getNearestTarget()
 					local distance = (hrp.Position - myRoot.Position).Magnitude
 					if distance <= LOCK_DISTANCE and distance < shortestDist then
 						shortestDist = distance
-						closest = char
+						closest = char -- Retorna o personagem correto
 					end
 				end
 			end
@@ -342,7 +343,7 @@ local function getNearestTarget()
 end
 
 -------------------------------------------------
--- SISTEMA LOCK
+-- SISTEMA LOCK (CORRIGIDO)
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
@@ -351,30 +352,27 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 	if not character then return end
+
+	-- Se não tem alvo, tenta pegar um novo
 	if not lockedTarget then
 		lockedTarget = getNearestTarget()
 		return
 	end
 
+	-- Pega as partes do alvo
 	local humanoid = lockedTarget:FindFirstChildOfClass("Humanoid")
 	local targetRoot = lockedTarget:FindFirstChild("HumanoidRootPart")
 
-	if not humanoid or humanoid.Health <= 0 then
-		lockedTarget = getNearestTarget()
-		return
-	end
-	if not targetRoot then
+	-- Verifica se o alvo é válido
+	if not humanoid or not targetRoot or humanoid.Health <= 0 then
 		lockedTarget = getNearestTarget()
 		return
 	end
 
-	local isPlayer = Players:GetPlayerFromCharacter(lockedTarget)
-	if isPlayer then
-		setCrosshairColor(Color3.fromRGB(100, 180, 255))
-	else
-		setCrosshairColor(Color3.fromRGB(0,255,100))
-	end
+	-- Muda cor da mira
+	setCrosshairColor(Color3.fromRGB(255,0,0))
 
+	-- Ajusta a câmera
 	camera.CFrame = CFrame.new(camera.CFrame.Position, targetRoot.Position)
 	if character:FindFirstChild("HumanoidRootPart") then
 		camera.Focus = character.HumanoidRootPart.CFrame
