@@ -1,5 +1,5 @@
 -------------------------------------------------
--- AZURI HUB - REVAMPED (CORRIGIDO - MOVIMENTO LIVRE)
+-- AZURE HUB - REVAMPED (NOME CORRIGIDO)
 -------------------------------------------------
 
 local Players = game:GetService("Players")
@@ -41,7 +41,7 @@ end)
 -------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "AzuriHub"
+gui.Name = "AzureHub" -- ✅ Nome Corrigido
 gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.Parent = player:WaitForChild("PlayerGui")
@@ -59,7 +59,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,0,0,100)
 title.Position = UDim2.new(0,0,0.5,-50)
 title.BackgroundTransparency = 1
-title.Text = "AZURI HUB"
+title.Text = "AZURE HUB" -- ✅ Nome Corrigido
 title.Font = Enum.Font.FredokaOne
 title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(100, 180, 255)
@@ -233,7 +233,7 @@ MainFrame.Position = UDim2.new(1,-140,0,20)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Draggable = true -- Começa podendo mover
+MainFrame.Draggable = true
 MainFrame.Parent = gui
 
 local UICorner = Instance.new("UICorner")
@@ -250,7 +250,7 @@ local lockIcon = Instance.new("TextButton")
 lockIcon.Size = UDim2.new(0,40,0,45)
 lockIcon.Position = UDim2.new(0,0,0,0)
 lockIcon.BackgroundColor3 = Color3.fromRGB(30,100,30)
-lockIcon.Text = "shift"
+lockIcon.Text = "🔓"
 lockIcon.TextColor3 = Color3.new(1,1,1)
 lockIcon.Font = Enum.Font.GothamBold
 lockIcon.TextScaled = true
@@ -278,16 +278,15 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -------------------------------------------------
--- FUNÇÕES DOS BOTÕES (CORRIGIDAS)
+-- FUNÇÕES DOS BOTÕES
 -------------------------------------------------
 
 -- Função do Cadeado
 lockIcon.MouseButton1Click:Connect(function()
 	menuLocked = not menuLocked
 	
-	--  CORREÇÃO AQUI: Agora libera o toque e o movimento
 	MainFrame.Draggable = not menuLocked
-	MainFrame.Active = not menuLocked -- <<< Linha adicionada para pegar o toque
+	MainFrame.Active = true
 
 	if menuLocked then
 		lockIcon.Text = "🔒"
@@ -310,7 +309,7 @@ lockButton.MouseButton1Click:Connect(function()
 		lockedTarget = nil
 		lockButton.Text = "LOCK"
 		MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
-		UIStroke.Color = Color3.fromRGB(80, 150, 255) -- Volta cor original
+		UIStroke.Color = Color3.fromRGB(80, 150, 255)
 	end
 end)
 
@@ -336,7 +335,7 @@ local function getNearestTarget()
 					local distance = (hrp.Position - myRoot.Position).Magnitude
 					if distance <= LOCK_DISTANCE and distance < shortestDist then
 						shortestDist = distance
-						closest = char -- Retorna o personagem correto
+						closest = char
 					end
 				end
 			end
@@ -346,7 +345,7 @@ local function getNearestTarget()
 end
 
 -------------------------------------------------
--- SISTEMA LOCK (CORRIGIDO)
+-- SISTEMA LOCK
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
@@ -356,26 +355,20 @@ RunService.RenderStepped:Connect(function()
 	end
 	if not character then return end
 
-	-- Se não tem alvo, tenta pegar um novo
 	if not lockedTarget then
 		lockedTarget = getNearestTarget()
 		return
 	end
 
-	-- Pega as partes do alvo
 	local humanoid = lockedTarget:FindFirstChildOfClass("Humanoid")
 	local targetRoot = lockedTarget:FindFirstChild("HumanoidRootPart")
 
-	-- Verifica se o alvo é válido
 	if not humanoid or not targetRoot or humanoid.Health <= 0 then
 		lockedTarget = getNearestTarget()
 		return
 	end
 
-	-- Muda cor da mira
 	setCrosshairColor(Color3.fromRGB(255,0,0))
-
-	-- Ajusta a câmera
 	camera.CFrame = CFrame.new(camera.CFrame.Position, targetRoot.Position)
 	if character:FindFirstChild("HumanoidRootPart") then
 		camera.Focus = character.HumanoidRootPart.CFrame
