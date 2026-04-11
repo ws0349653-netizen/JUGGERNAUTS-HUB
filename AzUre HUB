@@ -1,12 +1,12 @@
 -------------------------------------------------
--- AZURE HUB - REVAMPED (NOME CORRIGIDO)
+-- AZURE HUB - REVAMPED (CAMERA CORRIGIDA - NÃO SAI DA TELA)
 -------------------------------------------------
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
+local TweenService = TweenService
+local UserInputService = UserInputService
 
 -------------------------------------------------
 -- PLAYER
@@ -41,7 +41,7 @@ end)
 -------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "AzureHub" -- ✅ Nome Corrigido
+gui.Name = "AzureHub"
 gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
 gui.Parent = player:WaitForChild("PlayerGui")
@@ -59,7 +59,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,0,0,100)
 title.Position = UDim2.new(0,0,0.5,-50)
 title.BackgroundTransparency = 1
-title.Text = "AZURE HUB" -- ✅ Nome Corrigido
+title.Text = "AZURE HUB"
 title.Font = Enum.Font.FredokaOne
 title.TextScaled = true
 title.TextColor3 = Color3.fromRGB(100, 180, 255)
@@ -308,7 +308,7 @@ lockButton.MouseButton1Click:Connect(function()
 	else
 		lockedTarget = nil
 		lockButton.Text = "LOCK"
-		MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
+		MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,255)
 		UIStroke.Color = Color3.fromRGB(80, 150, 255)
 	end
 end)
@@ -345,7 +345,7 @@ local function getNearestTarget()
 end
 
 -------------------------------------------------
--- SISTEMA LOCK
+-- SISTEMA LOCK (CORRIGIDO - NÃO SAI DA TELA)
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
@@ -362,15 +362,23 @@ RunService.RenderStepped:Connect(function()
 
 	local humanoid = lockedTarget:FindFirstChildOfClass("Humanoid")
 	local targetRoot = lockedTarget:FindFirstChild("HumanoidRootPart")
+	local myRoot = character:FindFirstChild("HumanoidRootPart")
 
-	if not humanoid or not targetRoot or humanoid.Health <= 0 then
+	if not humanoid or not targetRoot or humanoid.Health <= 0 or not myRoot then
 		lockedTarget = getNearestTarget()
 		return
 	end
 
 	setCrosshairColor(Color3.fromRGB(255,0,0))
-	camera.CFrame = CFrame.new(camera.CFrame.Position, targetRoot.Position)
-	if character:FindFirstChild("HumanoidRootPart") then
-		camera.Focus = character.HumanoidRootPart.CFrame
-	end
+
+	-- ✅ A MAGICA AQUI:
+	-- Calcula o ponto médio entre VOCÊ e o INIMIGO
+	-- Assim a câmera fica no meio, mostrando os DOIS na tela
+	local middlePoint = myRoot.Position:Lerp(targetRoot.Position, 0.5)
+	
+	-- A câmera fica um pouco atrás desse ponto, olhando para o inimigo
+	camera.CFrame = CFrame.new(middlePoint + Vector3.new(0, 3, 8), targetRoot.Position + Vector3.new(0,2,0))
+	
+	-- Mantém o foco
+	camera.Focus = CFrame.new(middlePoint)
 end)
