@@ -250,7 +250,7 @@ local lockIcon = Instance.new("TextButton")
 lockIcon.Size = UDim2.new(0,40,0,45)
 lockIcon.Position = UDim2.new(0,0,0,0)
 lockIcon.BackgroundColor3 = Color3.fromRGB(30,100,30)
-lockIcon.Text = "🔓"
+lockIcon.Text = "shift"
 lockIcon.TextColor3 = Color3.new(1,1,1)
 lockIcon.Font = Enum.Font.GothamBold
 lockIcon.TextScaled = true
@@ -287,10 +287,10 @@ lockIcon.MouseButton1Click:Connect(function()
 	MainFrame.Draggable = not menuLocked -- Trava ou Destrava
 
 	if menuLocked then
-		lockIcon.Text = "🔒"
+		lockIcon.Text = "trancado"
 		lockIcon.BackgroundColor3 = Color3.fromRGB(100,30,30)
 	else
-		lockIcon.Text = "🔓"
+		lockIcon.Text = "livre"
 		lockIcon.BackgroundColor3 = Color3.fromRGB(30,100,30)
 	end
 end)
