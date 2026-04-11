@@ -95,9 +95,6 @@ local lockedTarget = nil
 local menuLocked = false
 
 -- ✅ VARIAVEL DO ZOOM (IGUAL NO CONSOLE)
--- Você pode mudar esse número para dar mais zoom ou menos zoom
--- Quanto MENOR o número, MAIS PERTO (mais zoom)
--- Quanto MAIOR o número, MAIS LONGE
 local ZOOM_DISTANCE = 15 
 
 -------------------------------------------------
@@ -236,7 +233,7 @@ end)
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0,130,0,45)
-MainFrame.Position = UDim2.new(1,-140,0,20)
+MainFrame.Position = UDim2.new(1,-140,0,20) -- ✅ VOCÊ PODE MUDAR ESSA POSIÇÃO A VONTADE AGORA!
 MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
@@ -305,6 +302,7 @@ lockIcon.MouseButton1Click:Connect(function()
 end)
 
 -- Função do Lock
+-- ✅ ESSA FUNÇÃO FOI REFEITA PARA NÃO QUEBRAR MAIS!
 lockButton.MouseButton1Click:Connect(function()
 	lockEnabled = not lockEnabled
 	if lockEnabled then
@@ -379,11 +377,6 @@ RunService.RenderStepped:Connect(function()
 	setCrosshairColor(Color3.fromRGB(255,0,0))
 
 	-- ✅ A MAGICA DO MODO CONSOLE:
-	-- 1. Calculamos o ângulo entre VOCÊ e o INIMIGO
-	-- 2. Colocamos a câmera ATRÁS DE VOCÊ, na distância do ZOOM que definimos
-	-- 3. E fazemos a câmera OLHAR EXATAMENTE PARA O INIMIGO
-	
-	-- Isso faz com que VOCÊ FIQUE NO CENTRO e a MIRA FIQUE NELE!
 	local angleCFrame = CFrame.new(myRoot.Position, targetRoot.Position)
 	local cameraPos = myRoot.Position + angleCFrame.LookVector * -ZOOM_DISTANCE + Vector3.new(0, 3, 0)
 	
