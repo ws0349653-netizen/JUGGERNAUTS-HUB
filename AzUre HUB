@@ -90,6 +90,8 @@ intro:Destroy()
 -------------------------------------------------
 
 local LOCK_DISTANCE = 120
+-- ✅ ALCANCE DO ESP AUMENTADO BEM MAIS
+local ESP_DISTANCE = 300 
 local lockEnabled = false
 local lockedTarget = nil
 local menuLocked = false
@@ -152,7 +154,7 @@ local function setCrosshairColor(color)
 end
 
 -------------------------------------------------
--- ESP (SOMENTE PLAYERS)
+-- ESP (SOMENTE PLAYERS - ALCANCE MELHORADO)
 -------------------------------------------------
 
 local espFolder = Instance.new("Folder")
@@ -184,7 +186,6 @@ RunService.Heartbeat:Connect(function()
 	local root = character:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	-- BUSCA SOMENTE PLAYERS PARA O ESP
 	for _,plr in pairs(Players:GetPlayers()) do
 		if plr ~= player then
 			local char = plr.Character
@@ -197,7 +198,8 @@ RunService.Heartbeat:Connect(function()
 			if hrp and humanoid and humanoid.Health > 0 then
 				local distance = (hrp.Position - root.Position).Magnitude
 				local pos, visible = camera:WorldToViewportPoint(hrp.Position)
-				if visible and distance <= LOCK_DISTANCE then
+				-- ✅ AGORA PEGA DE LONGE, MUITO MELHOR
+				if visible and distance <= ESP_DISTANCE then
 					if not espTable[plr] then
 						espTable[plr] = createESP()
 					end
@@ -304,7 +306,7 @@ lockButton.MouseButton1Click:Connect(function()
 		UIStroke.Color = Color3.fromRGB(255,80,80)
 	else
 		lockedTarget = nil
-		setCrosshairColor(Color3.new(1,1,1)) -- Volta ao normal
+		setCrosshairColor(Color3.new(1,1,1))
 		lockButton.Text = "LOCK"
 		MainFrame.BackgroundColor3 = Color3.fromRGB(15,15,25)
 		UIStroke.Color = Color3.fromRGB(80, 150, 255)
@@ -324,7 +326,6 @@ local function getNearestTarget()
 	local shortestDist = math.huge
 	local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 
-	-- Busca EM TUDO (Players e NPCs)
 	for _,humanoid in pairs(workspace:GetDescendants()) do
 		if humanoid:IsA("Humanoid") and humanoid.Health > 0 then
 			local char = humanoid.Parent
@@ -351,7 +352,7 @@ local function getNearestTarget()
 end
 
 -------------------------------------------------
--- SISTEMA LOCK (COM VERIFICAÇÃO DE COR)
+-- SISTEMA LOCK (CORES CERTAS)
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
@@ -374,7 +375,7 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 
-	-- ✅ MUDAR A COR CONFORME O TIPO
+	-- VERIFICA SE É PLAYER OU NPC
 	local isPlayer = false
 	for _,plr in pairs(Players:GetPlayers()) do
 		if plr.Character == lockedTarget then
@@ -384,12 +385,12 @@ RunService.RenderStepped:Connect(function()
 	end
 
 	if isPlayer then
-		setCrosshairColor(Color3.fromRGB(255,0,0)) -- VERMELHO = PLAYER
+		setCrosshairColor(Color3.fromRGB(255,0,0)) -- VERMELHO
 	else
-		setCrosshairColor(Color3.fromRGB(0,255,0)) -- VERDE = NPC
+		setCrosshairColor(Color3.fromRGB(0,255,0)) -- VERDE
 	end
 
-	-- ✅ A MAGICA DO MODO CONSOLE:
+	-- MOVIMENTO DA CAMERA
 	local angleCFrame = CFrame.new(myRoot.Position, targetRoot.Position)
 	local cameraPos = myRoot.Position + angleCFrame.LookVector * -ZOOM_DISTANCE + Vector3.new(0, 3, 0)
 	
