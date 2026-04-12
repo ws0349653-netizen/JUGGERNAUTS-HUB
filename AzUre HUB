@@ -1,5 +1,6 @@
 -------------------------------------------------
 -- AZURE HUB - REVAMPED (MODO CONSOLE / JUJUTSU STYLE)
+-- ✅ VERSÃO OTIMIZADA - NÃO DA LAG MAIS
 -------------------------------------------------
 
 local Players = game:GetService("Players")
@@ -90,13 +91,10 @@ intro:Destroy()
 -------------------------------------------------
 
 local LOCK_DISTANCE = 120
--- ✅ ALCANCE DO ESP AUMENTADO BEM MAIS
 local ESP_DISTANCE = 300 
 local lockEnabled = false
 local lockedTarget = nil
 local menuLocked = false
-
--- ✅ VARIAVEL DO ZOOM (IGUAL NO CONSOLE)
 local ZOOM_DISTANCE = 15 
 
 -------------------------------------------------
@@ -107,6 +105,7 @@ Lighting.GlobalShadows = false
 Lighting.FogEnd = 100000
 Lighting.Brightness = 2
 
+-- ✅ OTIMIZAÇÃO: Roda só uma vez
 for _,v in pairs(workspace:GetDescendants()) do
 	if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
 		v.Enabled = false
@@ -154,13 +153,16 @@ local function setCrosshairColor(color)
 end
 
 -------------------------------------------------
--- ESP (SOMENTE PLAYERS - ALCANCE MELHORADO)
+-- ESP (SISTEMA OTIMIZADO)
 -------------------------------------------------
 
 local espFolder = Instance.new("Folder")
 espFolder.Name = "ESP_System"
 espFolder.Parent = gui
 
+local espTable = {}
+
+-- ✅ CRIA O OBJETO SÓ UMA VEZ
 local function createESP()
 	local text = Instance.new("TextLabel")
 	text.BackgroundTransparency = 1
@@ -168,11 +170,10 @@ local function createESP()
 	text.Size = UDim2.new(0,200,0,16)
 	text.Font = Enum.Font.GothamBold
 	text.TextScaled = true
+	text.Visible = false
 	text.Parent = espFolder
 	return text
 end
-
-local espTable = {}
 
 Players.PlayerRemoving:Connect(function(plr)
 	if espTable[plr] then
@@ -181,6 +182,7 @@ Players.PlayerRemoving:Connect(function(plr)
 	end
 end)
 
+-- ✅ LOOP LEVE: SÓ ATUALIZA, NÃO CRIA DO ZERO
 RunService.Heartbeat:Connect(function()
 	if not character then return end
 	local root = character:FindFirstChild("HumanoidRootPart")
@@ -198,11 +200,13 @@ RunService.Heartbeat:Connect(function()
 			if hrp and humanoid and humanoid.Health > 0 then
 				local distance = (hrp.Position - root.Position).Magnitude
 				local pos, visible = camera:WorldToViewportPoint(hrp.Position)
-				-- ✅ AGORA PEGA DE LONGE, MUITO MELHOR
 				if visible and distance <= ESP_DISTANCE then
 					if not espTable[plr] then
 						espTable[plr] = createESP()
 					end
+					local obj = espTable[plr]
+					obj.Visible = true
+					
 					local healthPercent = math.floor((humanoid.Health / humanoid.MaxHealth) * 100)
 					local healthColor
 					if healthPercent >= 90 then healthColor = Color3.fromRGB(0,200,100)
@@ -210,10 +214,10 @@ RunService.Heartbeat:Connect(function()
 					elseif healthPercent >= 50 then healthColor = Color3.fromRGB(255,200,50)
 					elseif healthPercent >= 20 then healthColor = Color3.fromRGB(255,255,100)
 					else healthColor = Color3.fromRGB(255,80,80) end
-					espTable[plr].TextColor3 = healthColor
-					espTable[plr].Visible = true
-					espTable[plr].Position = UDim2.new(0,pos.X-100,0,pos.Y-60)
-					espTable[plr].Text = "➤ "..plr.Name.." | "..math.floor(distance).."m | "..healthPercent.."%"
+					
+					obj.TextColor3 = healthColor
+					obj.Position = UDim2.new(0,pos.X-100,0,pos.Y-60)
+					obj.Text = "➤ "..plr.Name.." | "..math.floor(distance).."m | "..healthPercent.."%"
 				else
 					if espTable[plr] then espTable[plr].Visible = false end
 				end
@@ -282,7 +286,6 @@ end)
 -- FUNÇÕES DOS BOTÕES
 -------------------------------------------------
 
--- Função do Cadeado
 lockIcon.MouseButton1Click:Connect(function()
 	menuLocked = not menuLocked
 	MainFrame.Draggable = not menuLocked
@@ -296,7 +299,6 @@ lockIcon.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Função do Lock
 lockButton.MouseButton1Click:Connect(function()
 	lockEnabled = not lockEnabled
 	if lockEnabled then
@@ -314,7 +316,7 @@ lockButton.MouseButton1Click:Connect(function()
 end)
 
 -------------------------------------------------
--- PEGAR ALVO (PLAYERS E NPCS)
+-- PEGAR ALVO
 -------------------------------------------------
 
 local function getNearestTarget()
@@ -352,7 +354,7 @@ local function getNearestTarget()
 end
 
 -------------------------------------------------
--- SISTEMA LOCK (CORES CERTAS)
+-- SISTEMA LOCK
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
@@ -375,7 +377,7 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 
-	-- VERIFICA SE É PLAYER OU NPC
+	-- CORRETA
 	local isPlayer = false
 	for _,plr in pairs(Players:GetPlayers()) do
 		if plr.Character == lockedTarget then
@@ -385,15 +387,13 @@ RunService.RenderStepped:Connect(function()
 	end
 
 	if isPlayer then
-		setCrosshairColor(Color3.fromRGB(255,0,0)) -- VERMELHO
+		setCrosshairColor(Color3.fromRGB(255,0,0))
 	else
-		setCrosshairColor(Color3.fromRGB(0,255,0)) -- VERDE
+		setCrosshairColor(Color3.fromRGB(0,255,0))
 	end
 
-	-- MOVIMENTO DA CAMERA
 	local angleCFrame = CFrame.new(myRoot.Position, targetRoot.Position)
 	local cameraPos = myRoot.Position + angleCFrame.LookVector * -ZOOM_DISTANCE + Vector3.new(0, 3, 0)
-	
 	camera.CFrame = CFrame.new(cameraPos, targetRoot.Position)
 	camera.Focus = CFrame.new(myRoot.Position)
 end)
