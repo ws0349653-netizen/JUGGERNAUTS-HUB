@@ -1,0 +1,561 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Settings = settings()
+
+-- Variáveis básicas
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- Atualiza personagem quando respawnar
+player.CharacterAdded:Connect(function(char)
+    character = char
+end)
+
+-- Variável corrigida (sem espaço no nome)
+_G.AntiStun = true
+local ANTISTUN_POWER = 1.5
+local MOVEMENT_SPEED = 0.15
+
+-- Sistema AntiStun
+RunService.Heartbeat:Connect(function()
+    if not _G.AntiStun then return end
+    if not character then return end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local root = character:FindFirstChild("HumanoidRootPart")
+    
+    if humanoid and root and humanoid.MoveDirection.Magnitude > 0 then
+        root.CFrame = root.CFrame + humanoid.MoveDirection.Unit * ANTISTUN_POWER * MOVEMENT_SPEED
+    end
+end)
+
+-- Interface inicial
+local gui = Instance.new("ScreenGui")
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local intro = Instance.new("Frame")
+intro.Size = UDim2.new(1,0,1,0)
+intro.BackgroundColor3 = Color3.new(0,0,0)
+intro.Parent = gui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(0,0,0,80)
+title.Position = UDim2.new(0.5,0,0.5,-40)
+title.BackgroundTransparency = 1
+title.Text = "BL4Ck HUB"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 48
+title.TextColor3 = Color3.fromRGB(255, 180, 220)
+title.TextTransparency = 1
+title.TextStrokeTransparency = 0.5
+title.Parent = intro
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2.5
+stroke.Color = Color3.fromRGB(170, 80, 255)
+stroke.Transparency = 1
+stroke.Parent = title
+
+local pulse = 0
+RunService.RenderStepped:Connect(function()
+    pulse = pulse + 0.05
+    stroke.Transparency = math.abs(math.sin(pulse)) * 0.4
+end)
+
+-- Animações de entrada
+TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0}):Play()
+TweenService:Create(stroke, TweenInfo.new(1), {Transparency = 0}):Play()
+
+task.wait(2.5)
+TweenService:Create(intro, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play()
+task.wait(0.8)
+intro:Destroy()
+
+-- Configurações de Câmera e Sistema de Alvo
+local ZOOM_DISTANCE = 15
+local lockEnabled = false
+local lockedTarget = nil
+local menuLocked = false
+
+-- Funções auxiliares corrigidas
+local function IsA(instance, className)
+    return instance:IsA(className)
+end
+
+local function FindFirstAncestorOfClass(instance, className)
+    return instance:FindFirstAncestorOfClass(className)
+end
+
+local function GetPlayerFromCharacter(model)
+    return Players:GetPlayerFromCharacter(model)
+end
+
+local function isPlayerPart(obj)
+    local model = FindFirstAncestorOfClass(obj, "Model")
+    return model and GetPlayerFromCharacter(model) ~= nil
+end
+
+-- Efeitos para desativar
+local EFFECTS_TO_DISABLE = {
+    ParticleEmitter = true,
+    Trail = true,
+    Beam = true,
+    Fire = true,
+    Smoke = true,
+    Sparkles = true
+}
+
+local POST_PROCESS_EFFECTS = {
+    BloomEffect = true,
+    BlurEffect = true,
+    ColorCorrectionEffect = true,
+    SunRaysEffect = true,
+    DepthOfFieldEffect = true
+}
+
+-- Otimização de gráficos
+local function optimize(v)
+    if not v or not v.Parent then return end
+
+    if IsA(v, "BasePart") then
+        local part = v
+        part.Reflectance = 0
+        if not isPlayerPart(part) then
+            part.Material = Enum.Material.SmoothPlastic
+        end
+    end
+
+    if EFFECTS_TO_DISABLE[v.ClassName] then
+        v.Enabled = false
+    end
+
+    if not isPlayerPart(v) then
+        if IsA(v, "Texture") then
+            v.Transparency = 0.3
+        elseif IsA(v, "Decal") then
+            v.Transparency = 0.1
+        end
+    end
+end
+
+-- Aplicar otimização em todos os objetos
+local allDescendants = game:GetDescendants()
+local total = #allDescendants
+local batchSize = 300
+
+task.spawn(function()
+    for i = 1, total, 1 do
+        optimize(allDescendants[i])
+        if i % batchSize == 0 then
+            task.wait()
+        end
+    end
+end)
+
+game.DescendantAdded:Connect(function(v)
+    task.spawn(optimize, v)
+end)
+
+-- Qualidade gráfica baixa
+task.spawn(function()
+    while task.wait(6) do
+        pcall(function()
+            Settings.Rendering.QualityLevel = Enum.QualityLevel.Level01
+        end)
+    end
+end)
+
+-- Configurações de iluminação
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 1000000000
+Lighting.Brightness = 2
+Lighting.EnvironmentDiffuseScale = 0
+Lighting.EnvironmentSpecularScale = 0
+Lighting.ShadowSoftness = 0
+Lighting.Ambient = Color3.new(1, 1, 1)
+
+for _, v in pairs(Lighting:GetChildren()) do
+    if POST_PROCESS_EFFECTS[v.ClassName] then
+        v.Enabled = false
+    end
+end
+
+Lighting.ChildAdded:Connect(function(v)
+    if POST_PROCESS_EFFECTS[v.ClassName] then
+        v.Enabled = false
+    end
+end)
+
+-- Limitar dados de rede
+pcall(function()
+    local NetworkClient = game:GetService("NetworkClient")
+    NetworkClient:SetOutgoingKBPSLimit(0)
+end)
+
+-- Mira
+local crosshair = Instance.new("Frame")
+crosshair.Size = UDim2.new(0,20,0,20)
+crosshair.Position = UDim2.new(0.5,-10,0.5,-45)
+crosshair.BackgroundTransparency = 1
+crosshair.Parent = gui
+
+local crosshairLines = {}
+
+local function createLine(x,y,w,h)
+    local line = Instance.new("Frame")
+    line.Size = UDim2.new(0,w,0,h)
+    line.Position = UDim2.new(0,x,0,y)
+    line.BackgroundColor3 = Color3.new(1,1,1)
+    line.BorderSizePixel = 0
+    line.Parent = crosshair
+    table.insert(crosshairLines, line)
+end
+
+createLine(9,0,2,6)
+createLine(9,14,2,6)
+createLine(0,9,6,2)
+createLine(14,9,6,2)
+
+local function setCrosshairColor(color)
+    for _,v in pairs(crosshairLines) do
+        v.BackgroundColor3 = color
+    end
+end
+
+-- Sistema ESP
+local espFolder = Instance.new("Folder")
+espFolder.Parent = gui
+
+local function createESP()
+    local text = Instance.new("TextLabel")
+    text.BackgroundTransparency = 1
+    text.TextStrokeTransparency = 0.6
+    text.Size = UDim2.new(0,200,0,14)
+    text.Font = Enum.Font.Gotham
+    text.TextScaled = true
+    text.Parent = espFolder
+    return text
+end
+
+local espTable = {}
+
+Players.PlayerRemoving:Connect(function(plr)
+    if espTable[plr] then
+        espTable[plr]:Destroy()
+        espTable[plr] = nil
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not character then return end
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= player then
+            local char = plr.Character
+            if not char then
+                if espTable[plr] then espTable[plr].Visible = false end
+                continue
+            end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+
+            if hrp and humanoid and humanoid.Health > 0 then
+                if not espTable[plr] then
+                    espTable[plr] = createESP()
+                end
+                local distance = math.floor((hrp.Position - root.Position).Magnitude)
+                local pos, visible = camera:WorldToViewportPoint(hrp.Position)
+
+                if visible then
+                    local healthPercent = math.floor((humanoid.Health / humanoid.MaxHealth) * 100)
+                    local healthColor
+                    if healthPercent >= 90 then 
+                        healthColor = Color3.fromRGB(0,120,0)
+                    elseif healthPercent >= 75 then 
+                        healthColor = Color3.fromRGB(0,255,0)
+                    elseif healthPercent >= 50 then 
+                        healthColor = Color3.fromRGB(255,140,0)
+                    elseif healthPercent >= 20 then 
+                        healthColor = Color3.fromRGB(255,255,0)
+                    else 
+                        healthColor = Color3.fromRGB(255,0,0) 
+                    end
+
+                    espTable[plr].TextColor3 = healthColor
+                    espTable[plr].Visible = true
+                    espTable[plr].Position = UDim2.new(0, pos.X - 100, 0, pos.Y - 60)
+                    espTable[plr].Text = plr.Name .. " [" .. distance .. "m] " .. healthPercent .. "%"
+                else
+                    if espTable[plr] then espTable[plr].Visible = false end
+                end
+            else
+                if espTable[plr] then espTable[plr].Visible = false end
+            end
+        end
+    end
+end)
+
+-- Menu principal
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0,130,0,45)
+MainFrame.Position = UDim2.new(1,-140,0,20)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15,10,25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = gui
+
+local Hitbox = Instance.new("Frame")
+Hitbox.Size = UDim2.new(0,180,0,300)
+Hitbox.Position = UDim2.new(0.5,0,0.5,0)
+Hitbox.AnchorPoint = Vector2.new(0.5, 0.5)
+Hitbox.BackgroundTransparency = 1
+Hitbox.Active = true
+Hitbox.Parent = MainFrame
+
+-- Sistema de arrastar menu
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+Hitbox.InputBegan:Connect(function(input)
+    if not menuLocked and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1) then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and not menuLocked and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- Estilo do menu
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0,8)
+UICorner.Parent = MainFrame
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Thickness = 2
+UIStroke.Color = Color3.fromRGB(180, 80, 255)
+UIStroke.Parent = MainFrame
+
+-- Botão de travar menu
+local lockIcon = Instance.new("TextButton")
+lockIcon.Size = UDim2.new(0,40,0,45)
+lockIcon.Position = UDim2.new(0,0,0,0)
+lockIcon.BackgroundColor3 = Color3.fromRGB(30,130,30)
+lockIcon.Text = "🔓"
+lockIcon.TextScaled = true
+lockIcon.Font = Enum.Font.GothamBold
+lockIcon.Parent = MainFrame
+
+local lockButton = Instance.new("TextButton")
+lockButton.Size = UDim2.new(1,-40,0,45)
+lockButton.Position = UDim2.new(0,40,0,0)
+lockButton.BackgroundTransparency = 1
+lockButton.Text = "LOCK"
+lockButton.TextColor3 = Color3.fromRGB(255, 180, 220)
+lockButton.Font = Enum.Font.GothamBold
+lockButton.TextScaled = true
+lockButton.Parent = MainFrame
+
+lockIcon.MouseButton1Click:Connect(function()
+    menuLocked = not menuLocked
+    MainFrame.Draggable = not menuLocked
+    Hitbox.Draggable = not menuLocked
+    if menuLocked then
+        lockIcon.Text = "🔒"
+        lockIcon.BackgroundColor3 = Color3.fromRGB(130,30,30)
+    else
+        lockIcon.Text = "🔓"
+        lockIcon.BackgroundColor3 = Color3.fromRGB(30,130,30)
+    end
+end)
+
+-- Encontrar alvo mais próximo da mira
+local function getNearestToCrosshair()
+    if not character then return nil end
+    local myRoot = character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    local closest = nil
+    local shortestDist = math.huge
+    local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+
+    for _, humanoid in pairs(workspace:GetDescendants()) do
+        if humanoid:IsA("Humanoid") and humanoid.Health > 0 then
+            local char = humanoid.Parent
+            if char ~= character then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local pos, visible = camera:WorldToViewportPoint(hrp.Position)
+                    if visible then
+                        local screenPos = Vector2.new(pos.X, pos.Y)
+                        local distToCenter = (screenPos - center).Magnitude
+                        
+                        if distToCenter < shortestDist then
+                            shortestDist = distToCenter
+                            closest = char
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- Botão de travar alvo
+lockButton.MouseButton1Click:Connect(function()
+    lockEnabled = not lockEnabled
+    
+    if lockEnabled then
+        lockedTarget = getNearestToCrosshair()
+        lockButton.Text = "UNLOCK"
+        MainFrame.BackgroundColor3 = Color3.fromRGB(25,15,35)
+        UIStroke.Color = Color3.fromRGB(255, 100, 180)
+    else
+        lockedTarget = nil
+
+        setCrosshairColor(Color3.new(1,1,1))
+        lockButton.Text = "LOCK"
+        MainFrame.BackgroundColor3 = Color3.fromRGB(15,10,25)
+        UIStroke.Color = Color3.fromRGB(180, 80, 255)
+    end
+end)
+
+-- Sistema de Câmera com Trava de Alvo
+RunService.RenderStepped:Connect(function()
+    if not lockEnabled or not lockedTarget then
+        if not lockedTarget then
+            setCrosshairColor(Color3.new(1,1,1))
+        end
+        return
+    end
+    if not character then return end
+
+    local humanoid = lockedTarget:FindFirstChildOfClass("Humanoid")
+    local targetRoot = lockedTarget:FindFirstChild("HumanoidRootPart")
+    local myRoot = character:FindFirstChild("HumanoidRootPart")
+
+    if targetRoot and myRoot then
+        local isPlayer = false
+        for _,plr in pairs(Players:GetPlayers()) do
+            if plr.Character == lockedTarget then
+                isPlayer = true
+                break
+            end
+        end
+
+        -- Muda cor da mira dependendo se é jogador ou NPC
+        if isPlayer then
+            setCrosshairColor(Color3.fromRGB(255,0,0))
+        else
+            setCrosshairColor(Color3.fromRGB(0,255,0))
+        end
+
+        -- Move a câmera para seguir o alvo
+        local angleCFrame = CFrame.new(myRoot.Position, targetRoot.Position)
+        local cameraPos = myRoot.Position + angleCFrame.LookVector * -ZOOM_DISTANCE + Vector3.new(0, 3, 0)
+        camera.CFrame = CFrame.new(cameraPos, targetRoot.Position)
+        camera.Focus = CFrame.new(myRoot.Position)
+    end
+end)
+
+-- ==============================================
+-- SISTEMA DE SKILL AIMBOT - COLE ABAIXO DO SEU SCRIPT
+-- ==============================================
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+-- CONFIGURAÇÕES - AJUSTE COMO QUISER
+local Configuracoes = {
+    AlcanceMaximo = 120,       -- Distância máxima que a skill chega
+    PrevisaoMovimento = 0.25,  -- Antecipa o movimento do alvo
+    IgnorarAliados = false,    -- Mude para true se não quiser acertar os amigos
+    ParteParaMirar = "HumanoidRootPart" -- Parte do corpo que vai ser alvo
+}
+
+-- FUNÇÃO QUE PEGA A POSIÇÃO CERTA PARA USAR A SKILL
+local function PegarPosicaoAlvoSkill()
+    local jogadorLocal = Players.LocalPlayer
+    local personagemLocal = jogadorLocal.Character
+    
+    if not personagemLocal then return nil end
+
+    local alvosValidos = {}
+
+    -- PROCURA OUTROS JOGADORES
+    for _, jogador in ipairs(Players:GetPlayers()) do
+        if jogador ~= jogadorLocal then
+            if Configuracoes.IgnorarAliados and jogador.Team == jogadorLocal.Team then
+                continue
+            end
+
+            local personagemAlvo = jogador.Character
+            if personagemAlvo then
+                local humanoide = personagemAlvo:FindFirstChildOfClass("Humanoid")
+                local parteAlvo = personagemAlvo:FindFirstChild(Configuracoes.ParteParaMirar)
+
+                if humanoide and parteAlvo and humanoide.Health > 0 then
+                    local distancia = (personagemLocal.HumanoidRootPart.Position - parteAlvo.Position).Magnitude
+                    if distancia <= Configuracoes.AlcanceMaximo then
+                        table.insert(alvosValidos, {
+                            Posicao = parteAlvo.Position,
+                            Velocidade = parteAlvo.Velocity
+                        })
+                    end
+                end
+            end
+        end
+    end
+
+    -- PROCURA NPCS SE TIVER NO JOGO
+    for _, npc in ipairs(Workspace:GetChildren()) do
+        if npc.Name == "Inimigos" or npc.Name == "NPCs" then
+            for _, corpo in ipairs(npc:GetChildren()) do
+                local humanoide = corpo:FindFirstChildOfClass("Humanoid")
+                local parteAlvo = corpo:FindFirstChild(Configuracoes.ParteParaMirar)
+
+                if humanoide and parteAlvo and humanoide.Health > 0 then
+                    local distancia = (personagemLocal.HumanoidRootPart.Position - parteAlvo.Position).Magnitude
+                    if distancia <= Configuracoes.AlcanceMaximo then
+                        table.insert(alvosValidos, {
+                            Posicao = parteAlvo.Position,
+                            Velocidade = parteAlvo.Velocity
+                        })
+                    end
+                end
+            end
+        end
+    end
+
+    -- SE NÃO TEM ALVOS, RETORNA NADA
+    if #alvosValidos == 0 then return nil end
+
+    -- PEGA O ALVO MAIS PRÓXIMO E CALCULA A POSIÇÃO FINAL
+    local alvoMaisProximo = alvosValidos[1]
+    local posicaoFinal = alvoMaisProximo.Posicao + (alvoMaisProximo.Velocidade * Configuracoes.PrevisaoMovimento)
+
+    return posicaoFinal
+end
+-- ==============================================
+-- FIM DO SISTEMA DE SKILL AIMBOT
+-- ==============================================
