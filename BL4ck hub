@@ -1,7 +1,5 @@
 -- ==============================================
--- 🚀 BL4Ck HUB - VERSÃO COM ESP REESTRUTURADO
--- 🎛️ Menu Compacto | Cadeado Arrastável | ESP LIMPO SEM FUNDO
--- ⚡ TODAS AS FUNÇÕES ORIGINAIS MANTIDAS | APENAS ESTÉTICA ALTERADA
+--  BL4Ck HUB - VERSÃO COM ESP REESTRUTURADO
 -- ==============================================
 
 local Players = game:GetService("Players")
@@ -21,7 +19,7 @@ player.CharacterAdded:Connect(function(char)
     character = char
 end)
 
--- ⚙️ CONFIGURAÇÕES GERAIS
+--  CONFIGURAÇÕES GERAIS
 _G.AntiStun = true -- Começa ativado
 _G.AtivarESP = true -- Começa ativado
 _G.AtivarMiraHabilidade = true -- Começa ativado
@@ -38,7 +36,7 @@ local menuExpandido = false -- Controla se o menu grande está aberto ou fechado
 local menuLocked = false -- Trava para não arrastar
 
 -- ==============================================
--- 🛡️ SISTEMA ANTI STUN FUNCIONAL
+-- SISTEMA ANTI STUN FUNCIONAL
 -- ==============================================
 RunService.Heartbeat:Connect(function()
     pcall(function()
@@ -55,7 +53,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ==============================================
--- 🎬 TELA DE ABERTURA
+-- TELA DE ABERTURA
 -- ==============================================
 local gui = Instance.new("ScreenGui")
 gui.Name = "BlackHub"
@@ -105,7 +103,7 @@ task.wait(0.8)
 intro:Destroy()
 
 -- ==============================================
--- 🚀 OTIMIZAÇÃO E ILUMINAÇÃO
+-- OTIMIZAÇÃO E ILUMINAÇÃO
 -- ==============================================
 local EFFECTS_TO_DISABLE = {
     ParticleEmitter = true, Trail = true, Beam = true, Fire = true, Smoke = true, Sparkles = true
@@ -171,7 +169,7 @@ Lighting.ChildAdded:Connect(function(v) if POST_PROCESS_EFFECTS[v.ClassName] the
 pcall(function() local NetworkClient = game:GetService("NetworkClient") NetworkClient:SetOutgoingKBPSLimit(0) end)
 
 -- ==============================================
--- 🎯 MIRA PERSONALIZADA
+-- MIRA PERSONALIZADA
 -- ==============================================
 local crosshair = Instance.new("Frame")
 crosshair.Size = UDim2.new(0, 20, 0, 20)
@@ -209,7 +207,7 @@ local espFolder = Instance.new("Folder")
 espFolder.Name = "ESP_Objetos"
 espFolder.Parent = gui
 
--- 🔧 FUNÇÃO CRIAR ESP AGORA TOTALMENTE LIMPO: SEM FUNDO, SEM BORDA, SÓ TEXTO
+-- FUNÇÃO CRIAR ESP AGORA TOTALMENTE LIMPO: SEM FUNDO, SEM BORDA, SÓ TEXTO
 local function criarESP()
     -- ❌ SEM QUADRO, SEM FUNDO, SEM NADA! SÓ O TEXTO DIRETO
     local textoESP = Instance.new("TextLabel")
